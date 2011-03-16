@@ -111,6 +111,11 @@ module Cnu
         self.object = obj
       end
 
+      def resolve_class
+        @resolve_class ||=
+          eval("::#{@cls.to_s}")
+      end
+
       def object= x
         # @object = x
         @cls = x && x.class.name.to_sym
@@ -142,7 +147,7 @@ module Cnu
 
       def object
         @object ||= 
-          eval(@cls.to_s).find(@id) || 
+          resolve_class.find(@id) || 
           (raise Error::DisappearingObject, "#{@cls.inspect} #{@id.inspect}")
       end
     end
