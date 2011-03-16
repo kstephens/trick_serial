@@ -86,10 +86,22 @@ describe "CnuSerializer" do
     @o[:m_unsaved].object_id.should == @m_unsaved.object_id
   end
 
-  it "should handle proxy swizzling" do
+  it "should handle proxy swizzling through Hash#[]" do
     @s.encode!(@h)
     p = @h[:m]
     # pp [ :p=, p ]
+    p.class.should == @m.class
+  end
+
+  it "should handle proxy swizzling through Hash#values" do
+    @s.encode!(@h)
+    p = @h.values
+    p.select{|m| @m.class == m.class}.size.should == 2
+  end
+
+  it "should handle proxy swizzling through Array#[]" do
+    @s.encode!(@h)
+    p = @h[:a][2]
     p.class.should == @m.class
   end
 
@@ -120,14 +132,14 @@ describe "CnuSerializer" do
   it "should handle proxy swizzling through Array#select" do
     @s.encode!(@h)
     p = @h[:m]
-    a = @h[:a].select { | e | Cnu::Serializer::Test::Model === e }
+    a = @h[:a].select { | e | @m.class == e.class }
     a.should == [ p, p ]
   end
 
   it "should handle proxy swizzling through Array#find" do
     @s.encode!(@h)
     p = @h[:m]
-    a = @h[:a].find { | e | Cnu::Serializer::Test::Model === e }
+    a = @h[:a].find { | e | @m.class == e.class }
     a.should == p
   end
 
