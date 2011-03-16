@@ -22,6 +22,7 @@ module Cnu
           obj = new
           obj.id = id
           # $stderr.puts "  #{self}.find(#{id.inspect}) => #{obj.inspect}"
+          # (@@find_map[id] ||= 0) += 1 # Shouldn't Ruby parse this?
           @@find_map[id] ||= 0
           @@find_map[id] += 1
           obj
@@ -73,6 +74,44 @@ describe "CnuSerializer" do
     p = @h[:ar_obj]
     # pp [ :p=, p ]
     p.class.should == @m.class
+  end
+
+  it "should handle proxy swizzling through Array#each" do
+    @s.encode!(@h)
+    p = @h[:ar_obj]
+    a = [ ]
+    @h[:a].each do | e |
+      a << e
+    end
+    a.should == [ 0, 1, p, 3, 4, p ]
+  end
+
+  it "should handle proxy swizzling through Array#map" do
+    @s.encode!(@h)
+    p = @h[:ar_obj]
+    a = @h[:a].each { | e | e }
+    a.should == [ 0, 1, p, 3, 4, p ]
+  end
+
+  it "should handle proxy swizzling through Array#map!" do
+    @s.encode!(@h)
+    p = @h[:ar_obj]
+    a = @h[:a].map! { | e | 1; e }
+    a.should == [ 0, 1, p, 3, 4, p ]
+  end
+
+  it "should handle proxy swizzling through Array#select" do
+    @s.encode!(@h)
+    p = @h[:ar_obj]
+    a = @h[:a].select { | e | Cnu::Serializer::Test::Model === e }
+    a.should == [ p, p ]
+  end
+
+  it "should handle proxy swizzling through Array#find" do
+    @s.encode!(@h)
+    p = @h[:ar_obj]
+    a = @h[:a].find { | e | Cnu::Serializer::Test::Model === e }
+    a.should == p
   end
 
   it "should lazily traverse proxies" do

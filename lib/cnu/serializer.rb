@@ -18,6 +18,10 @@ module Cnu
       @class_proxy_cache = { }
       # debugger
       _encode! x
+
+      @visited = @proxyable = 
+        @object_to_proxy_map = 
+        @class_proxy_cache = nil
       x
     end
 
@@ -142,14 +146,26 @@ module Cnu
 
       def each
         unless @does_not_have_proxies
-          super { | x | }
+          size.times do | i |
+            self[i]
+          end
           @does_not_have_proxies = false
         end
         super
       end
-    end
-    module ProxySwizzlingHash
 
+      def map!
+        each { | e | e }
+        super
+      end
+      
+      def select
+        each { | e | }
+        super
+      end
+    end
+
+    module ProxySwizzlingHash
       def [](i)
         if ObjectProxy === (p = super)
           p = self[i] = p.object

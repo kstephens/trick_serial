@@ -16,7 +16,7 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/kstephens/cnu_serializer"
   gem.license = "MIT"
   gem.summary = %Q{A Serialization Framework.}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.description = %Q{Provides delayed serialization/deserialization using proxies.}
   gem.email = "ks.github@kurtstephens.com"
   gem.authors = ["Kurt Stephens"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
