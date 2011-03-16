@@ -159,7 +159,7 @@ describe "CnuSerializer" do
     p = @h[:m]
 
     @h[:m].object_id.should == p.object_id
-    @h[:m2].object_id.should == p.object_id
+    @h[:a2].object_id.should == @h[:a].object_id
     @h[:a][2].object_id.should == p.object_id
     @h[:a][5].object_id.should == p.object_id
   end
