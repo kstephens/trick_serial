@@ -115,9 +115,13 @@ describe "CnuSerializer" do
   end
 
   it "should lazily traverse proxies" do
+    fm = Cnu::Serializer::Test::PhonyActiveRecord.find_map
+
+    fm[@m.id].should == nil
+
     @s.encode!(@h)
 
-    fm = Cnu::Serializer::Test::PhonyActiveRecord.find_map
+    @h = Marshal.load(Marshal.dump(@h))
 
     fm[@m.id].should == nil
 
