@@ -10,6 +10,11 @@ module Cnu
       @proxy_class_map ||= @@proxy_class_map
     end
 
+    def encode x
+      @copy = true
+      encode! x
+    end
+
     def encode! x
       @root = x
       @visited = { }
@@ -17,12 +22,12 @@ module Cnu
       @object_to_proxy_map = { }
       @class_proxy_cache = { }
       # debugger
-      _encode! x
-
+      o = _encode! x
+      @copy =
       @visited = @proxyable = 
         @object_to_proxy_map = 
         @class_proxy_cache = nil
-      x
+      o
     end
 
     def _encode! x
@@ -33,9 +38,13 @@ module Cnu
         x
 
       when Array
-        return x if @visited[x.object_id]
-        @visited[x.object_id] = x
+        if o = @visited[x.object_id]
+          return o
+        end
         extended = false
+        o = @copy ? x.dup : x
+        @visited[x.object_id] = o
+        x = o
         x.map! do | v |
           v = _encode! v
           if ObjectProxy === v && ! extended
@@ -46,9 +55,13 @@ module Cnu
         end
 
       when Hash
-        return x if @visited[x.object_id]
-        @visited[x.object_id] = x
+        if o = @visited[x.object_id]
+          return o
+        end
         extended = false
+        o = @copy ? x.dup : x
+        @visited[x.object_id] = o
+        x = o
         x.keys.to_a.each do | k |
           v = x[k] = _encode!(x[k])
           if ObjectProxy === v && ! extended

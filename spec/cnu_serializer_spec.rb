@@ -53,15 +53,17 @@ describe "CnuSerializer" do
       :a => 1,
       'b' => 2,
       :obj => Object.new,
-      :ar_obj => @m,
-      :a => [ 0, 1, @m, 3, 4, @m ],  
+      :m => @m,
+      :a => [ 0, 1, @m, 3, 4, @m ],
     }
+    @h[:a2] = @h[:a]
+    @h[:h2] = @h
   end
 
   it "should handle #encode!" do
     require 'pp'
     
-    @h[:ar_obj].should == @m
+    @h[:m].should == @m
     @h[:a][2].should == @m
 
     result = @s.encode!(@h)
@@ -71,14 +73,14 @@ describe "CnuSerializer" do
 
   it "should handle proxy swizzling" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     # pp [ :p=, p ]
     p.class.should == @m.class
   end
 
   it "should handle proxy swizzling through Array#each" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     a = [ ]
     @h[:a].each do | e |
       a << e
@@ -88,28 +90,28 @@ describe "CnuSerializer" do
 
   it "should handle proxy swizzling through Array#map" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     a = @h[:a].each { | e | e }
     a.should == [ 0, 1, p, 3, 4, p ]
   end
 
   it "should handle proxy swizzling through Array#map!" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     a = @h[:a].map! { | e | 1; e }
     a.should == [ 0, 1, p, 3, 4, p ]
   end
 
   it "should handle proxy swizzling through Array#select" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     a = @h[:a].select { | e | Cnu::Serializer::Test::Model === e }
     a.should == [ p, p ]
   end
 
   it "should handle proxy swizzling through Array#find" do
     @s.encode!(@h)
-    p = @h[:ar_obj]
+    p = @h[:m]
     a = @h[:a].find { | e | Cnu::Serializer::Test::Model === e }
     a.should == p
   end
@@ -125,11 +127,11 @@ describe "CnuSerializer" do
 
     fm[@m.id].should == nil
 
-    p = @h[:ar_obj]
+    p = @h[:m]
 
     fm[@m.id].should == 1
 
-    @h[:ar_obj].object_id.should == p.object_id
+    @h[:m].object_id.should == p.object_id
     @h[:a][2].object_id.should == p.object_id
     @h[:a][5].object_id.should == p.object_id
 
@@ -139,9 +141,9 @@ describe "CnuSerializer" do
   it "should preserve object identity" do
     @s.encode!(@h)
 
-    p = @h[:ar_obj]
+    p = @h[:m]
 
-    @h[:ar_obj].object_id.should == p.object_id
+    @h[:m].object_id.should == p.object_id
     @h[:a][2].object_id.should == p.object_id
     @h[:a][5].object_id.should == p.object_id
   end
@@ -151,12 +153,24 @@ describe "CnuSerializer" do
 
     @o = Marshal.load(Marshal.dump(@h))
 
-    p = @o[:ar_obj]
+    p = @o[:m]
     p.class.should == @m.class
 
-    @o[:ar_obj].object_id.should == p.object_id
+    @o[:m].object_id.should == p.object_id
     @o[:a][2].object_id.should == p.object_id
     @o[:a][5].object_id.should == p.object_id
+    @o[:h2].object_id.should == @o.object_id
+  end
+
+  it "should copy core collections" do
+    @o = @s.encode(@h)
+
+    @o.object_id.should_not == @h.object_id
+    @o[:a].object_id.should_not == @h[:a].object_id
+    @o[:a2].object_id.should == @o[:a].object_id
+
+    @o[:m].object_id.should_not == @h[:m].object_id
+    @o[:h2].object_id.should == @o.object_id
   end
 
 end
