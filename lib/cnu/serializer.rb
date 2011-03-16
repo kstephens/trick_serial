@@ -138,7 +138,8 @@ module Cnu
 
     module ProxySwizzlingArray
       def [](i)
-        if ! @does_not_have_proxies && ObjectProxy === (p = super)
+        p = super
+        if ! @does_not_have_proxies && ObjectProxy === p
           p = self[i] = p.object
         end
         p
