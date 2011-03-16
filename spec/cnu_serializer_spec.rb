@@ -49,26 +49,41 @@ describe "CnuSerializer" do
     Cnu::Serializer::Test::PhonyActiveRecord.find_map.clear
 
     @m = Cnu::Serializer::Test::Model.new(123)
+    @m_unsaved = Cnu::Serializer::Test::Model.new(:unsaved)
+    @m_unsaved.id = nil
     @h = {
       :a => 1,
       'b' => 2,
       :obj => Object.new,
       :m => @m,
       :a => [ 0, 1, @m, 3, 4, @m ],
+      :m_unsaved => @m_unsaved,
     }
     @h[:a2] = @h[:a]
     @h[:h2] = @h
   end
 
   it "should handle #encode!" do
-    require 'pp'
-    
     @h[:m].should == @m
     @h[:a][2].should == @m
 
     result = @s.encode!(@h)
 
     result.object_id.should == @h.object_id
+  end
+
+  it "should proxy unsaved models" do
+    @o = @s.encode!(@h)
+
+    @o[:m].object_id.should_not == @m.object_id
+    @o[:m].class.should == @m.class
+    @o[:m].id.should == @m.id
+  end
+
+  it "should not proxy unsaved models" do
+    @o = @s.encode!(@h)
+
+    @o[:m_unsaved].object_id.should == @m_unsaved.object_id
   end
 
   it "should handle proxy swizzling" do
