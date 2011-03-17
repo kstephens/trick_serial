@@ -1,5 +1,5 @@
 
-module Cnu
+module TrickSerial
   class Serializer
     attr_accessor :proxy_class_map
     attr_reader :root
@@ -14,7 +14,7 @@ module Cnu
 
     @@default = nil
     def self.default
-      Thread.current[:'Cnu::Serializer.default'] ||
+      Thread.current[:'TrickSerial::Serializer.default'] ||
         @@default
     end
     def self.default= x

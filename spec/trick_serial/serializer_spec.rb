@@ -1,19 +1,19 @@
-require File.expand_path('../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 
-require 'cnu/serializer'
+require 'trick_serial/serializer'
 
 ######################################################################
 
-describe "Cnu::Serializer" do
+describe "TrickSerial::Serializer" do
   before(:each) do 
-    @s = Cnu::Serializer.new
+    @s = TrickSerial::Serializer.new
     @s.proxy_class_map = { 
-      Cnu::Serializer::Test::PhonyActiveRecord => Cnu::Serializer::ActiveRecordProxy,
+      TrickSerial::Serializer::Test::PhonyActiveRecord => TrickSerial::Serializer::ActiveRecordProxy,
     }
-    Cnu::Serializer::Test::PhonyActiveRecord.find_map.clear
+    TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
 
-    @m = Cnu::Serializer::Test::Model.new(123)
-    @m_unsaved = Cnu::Serializer::Test::Model.new(:unsaved)
+    @m = TrickSerial::Serializer::Test::Model.new(123)
+    @m_unsaved = TrickSerial::Serializer::Test::Model.new(:unsaved)
     @m_unsaved.id = nil
     @h = {
       :a => 1,
@@ -108,7 +108,7 @@ describe "Cnu::Serializer" do
   end
 
   it "should lazily traverse proxies" do
-    fm = Cnu::Serializer::Test::PhonyActiveRecord.find_map
+    fm = TrickSerial::Serializer::Test::PhonyActiveRecord.find_map
 
     fm[@m.id].should == nil
 

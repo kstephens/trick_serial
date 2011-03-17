@@ -1,6 +1,6 @@
-require 'cnu/serializer'
+require 'trick_serial/serializer'
 
-module Cnu
+module TrickSerial
   class Serializer
     # Support for ::CGI::Session stores.
     module CgiSession
@@ -21,7 +21,7 @@ module Cnu
         end
       end
       
-      # Defines common mixin for interjecting Cnu::Serializer before
+      # Defines common mixin for interjecting TrickSerial::Serializer before
       # SessionStore#update saves its data. 
       module SessionStore
         def self.included target
@@ -33,37 +33,37 @@ module Cnu
           def included target
             super
             target.class_eval do 
-              alias :restore_without_cnu_serializer :restore
-              alias :restore :restore_with_cnu_serializer
-              alias :update_without_cnu_serializer :update
-              alias :update :update_with_cnu_serializer
+              alias :restore_without_trick_serial_serializer :restore
+              alias :restore :restore_with_trick_serial_serializer
+              alias :update_without_trick_serial_serializer :update
+              alias :update :update_with_trick_serial_serializer
             end
           end
         end
         
-        def restore_with_cnu_serializer
-          restore_without_cnu_serializer
-          decode_with_cnu_serializer!
+        def restore_with_trick_serial_serializer
+          restore_without_trick_serial_serializer
+          decode_with_trick_serial_serializer!
           _data
         end
 
-        def encode_with_cnu_serializer!
+        def encode_with_trick_serial_serializer!
         end
 
-        def decode_with_cnu_serializer!
+        def decode_with_trick_serial_serializer!
         end
 
-        # Clones Cnu::Serializer.default.
+        # Clones TrickSerial::Serializer.default.
         # Encodes the session store's "data".
         # Replaces the session store's data with the encoded data.
         # Call original #update.
         # Restores old session store's "data".
-        def update_with_cnu_serializer
-          serializer = Cnu::Serializer.default.dup
+        def update_with_trick_serial_serializer
+          serializer = TrickSerial::Serializer.default.dup
           data_save = self._data
           self._data = serializer.encode(self._data)
-          encode_with_cnu_serializer!
-          update_without_cnu_serializer
+          encode_with_trick_serial_serializer!
+          update_without_trick_serial_serializer
         ensure
           self._data = data_save
         end
@@ -81,12 +81,12 @@ module Cnu
         def _data; @hash; end
         def _data= x; @hash = x; end
 
-        def encode_with_cnu_serializer!
+        def encode_with_trick_serial_serializer!
           # $stderr.puts "#{self} encode <= @hash=#{@hash.inspect}"
           @hash = { '_' => ::Base64.encode64(Marshal.dump(@hash)).chomp! }
           # $stderr.puts "#{self} encode => @hash=#{@hash.inspect}"
         end
-        def decode_with_cnu_serializer!
+        def decode_with_trick_serial_serializer!
           # $stderr.puts "#{self} decode <= @hash=#{@hash.inspect}"
           @hash = @hash['_'] ? Marshal.load(::Base64.decode64(@hash['_'])) : { }
           # $stderr.puts "#{self} decode => @hash=#{@hash.inspect}"

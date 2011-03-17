@@ -1,4 +1,6 @@
-module Cnu
+require 'trick_serial/serializer'
+
+module TrickSerial
   class Serializer
     module Rails
       def self.activate!
@@ -32,22 +34,22 @@ module Cnu
           def self.included target
             super
             target.class_eval do
-              alias :get_session_without_cnu_serializer :get_session
-              alias :get_session :get_session_with_cnu_serializer
-              alias :set_session_without_cnu_serializer :set_session
-              alias :set_session :get_session_with_cnu_serializer
+              alias :get_session_without_trick_serial_serializer :get_session
+              alias :get_session :get_session_with_trick_serial_serializer
+              alias :set_session_without_trick_serial_serializer :set_session
+              alias :set_session :get_session_with_trick_serial_serializer
             end
           end
 
-          def get_session_with_cnu_serializer env, sid
-            result = get_session_without_cnu_serializer env, sid
+          def get_session_with_trick_serial_serializer env, sid
+            result = get_session_without_trick_serial_serializer env, sid
             result
           end
 
-          def set_session_with_cnu_serializer env, sid, session_data
-            serializer = (env[:'Cnu::Serializer.instance'] || Cnu::Serializer.default).dup
+          def set_session_with_trick_serial_serializer env, sid, session_data
+            serializer = (env[:'TrickSerial::Serializer.instance'] || TrickSerial::Serializer.default).dup
             session_data = serializer.encode(session_data) 
-            set_session_without_cnu_serializer env, sid, session_data
+            set_session_without_trick_serial_serializer env, sid, session_data
             result
           end
         end
@@ -56,18 +58,18 @@ module Cnu
           def self.included target
             super
             target.class_eval do
-              alias :marshal_data_without_cnu_serializer! :marshal_data!
-              alias :marshal_data! :marshal_data_with_cnu_serializer!
+              alias :marshal_data_without_trick_serial_serializer! :marshal_data!
+              alias :marshal_data! :marshal_data_with_trick_serial_serializer!
             end
           end
 
-          def marshal_data_with_cnu_serializer!
+          def marshal_data_with_trick_serial_serializer!
             save_data = @data
             if loaded?
-              serializer = Cnu::Serializer.default.dup
+              serializer = TrickSerial::Serializer.default.dup
               @data = serializer.encode(@data)
             end
-            marshal_data_without_cnu_serializer!
+            marshal_data_without_trick_serial_serializer!
           ensure
             @data = save_data
           end
@@ -77,8 +79,8 @@ module Cnu
       # Rails 1.2 support.
       module V12
         def self.activate!
-          require 'cnu/serializer/cgi_session'
-          Cnu::Serializer::CgiSession.activate!
+          require 'trick_serial/serializer/cgi_session'
+          TrickSerial::Serializer::CgiSession.activate!
         end
       end
     end

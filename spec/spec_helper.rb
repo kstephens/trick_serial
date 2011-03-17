@@ -1,7 +1,7 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'rspec'
-require 'cnu_serializer'
+require 'trick_serial'
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
@@ -21,7 +21,7 @@ end
 # Common test helpers
 #
 
-module Cnu
+module TrickSerial
   class Serializer
     module Test
       class PhonyActiveRecord

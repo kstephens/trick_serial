@@ -1,7 +1,7 @@
-require File.expand_path('../spec_helper', __FILE__)
+require File.expand_path('../../spec_helper', __FILE__)
 
 # Test Target:
-require 'cnu/serializer/cgi_session'
+require 'trick_serial/serializer/cgi_session'
 
 # Test Helpers:
 require 'cgi'
@@ -10,26 +10,26 @@ require 'cgi/session/pstore'
 require 'fileutils'
 require 'stringio'
 
-Cnu::Serializer::CgiSession.activate!
+TrickSerial::Serializer::CgiSession.activate!
 
-describe "Cnu::Serializer::Cgi::Session" do
+describe "TrickSerial::Serializer::Cgi::Session" do
   before(:each) do 
-    @s = Cnu::Serializer.new
+    @s = TrickSerial::Serializer.new
     @s.proxy_class_map = { 
-      Cnu::Serializer::Test::PhonyActiveRecord => Cnu::Serializer::ActiveRecordProxy,
+      TrickSerial::Serializer::Test::PhonyActiveRecord => TrickSerial::Serializer::ActiveRecordProxy,
     }
 
-    Cnu::Serializer::Test::PhonyActiveRecord.find_map.clear
+    TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
     
-    @m = Cnu::Serializer::Test::Model.new(123)
-    @m_unsaved = Cnu::Serializer::Test::Model.new(:unsaved)
+    @m = TrickSerial::Serializer::Test::Model.new(123)
+    @m_unsaved = TrickSerial::Serializer::Test::Model.new(:unsaved)
     @m_unsaved.id = nil
 
-    Cnu::Serializer.default = @s
+    TrickSerial::Serializer.default = @s
   end
 
   after(:each) do 
-    Cnu::Serializer.default = nil
+    TrickSerial::Serializer.default = nil
   end
 
 
@@ -88,7 +88,7 @@ describe "Cnu::Serializer::Cgi::Session" do
 
     create_session!
 
-    fm = Cnu::Serializer::Test::PhonyActiveRecord.find_map
+    fm = TrickSerial::Serializer::Test::PhonyActiveRecord.find_map
     fm.clear
     fm[@m.id].should == nil
 
