@@ -1,7 +1,7 @@
 module Cnu
   class Serializer
     module Rails
-      def self.initialize!
+      def self.activate!
         Cnu::Serializer::CgiSession.initialize!
 
         rails_version = 
