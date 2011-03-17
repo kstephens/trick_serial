@@ -4,43 +4,7 @@ require 'cnu/serializer'
 
 ######################################################################
 
-module Cnu
-  class Serializer
-    module Test
-      class PhonyActiveRecord
-        attr_accessor :id
-
-        @@find_map = { }
-        def self.find_map
-          @@find_map
-        end
-
-        def initialize
-          @id = object_id
-        end
-        def self.find(id)
-          obj = new
-          obj.id = id
-          # $stderr.puts "  #{self}.find(#{id.inspect}) => #{obj.inspect}"
-          # (@@find_map[id] ||= 0) += 1 # Shouldn't Ruby parse this?
-          @@find_map[id] ||= 0
-          @@find_map[id] += 1
-          obj
-        end
-      end
-      
-      class Model < PhonyActiveRecord
-        attr_accessor :state
-        def initialize x = nil
-          super()
-          @state = x
-        end
-      end
-    end
-  end
-end
-
-describe "CnuSerializer" do
+describe "Cnu::Serializer" do
   before(:each) do 
     @s = Cnu::Serializer.new
     @s.proxy_class_map = { 
@@ -163,6 +127,7 @@ describe "CnuSerializer" do
     @h[:a][5].object_id.should == p.object_id
 
     fm[@m.id].should == 1
+    fm.keys.size.should == 1
   end
 
   it "should preserve object identity" do

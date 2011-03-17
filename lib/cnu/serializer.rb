@@ -5,16 +5,34 @@ module Cnu
     attr_reader :root
 
     @@proxy_class_map = nil
+    def self.proxy_class_map 
+      @@proxy_class_map
+    end
+    def self.proxy_class_map= x
+      @@proxy_class_map = x
+    end
+
+    @@default = nil
+    def self.default
+      Thread.current[:'Cnu::Serializer.default'] ||
+        @@default
+    end
+    def self.default= x
+      @@default = x
+    end
 
     def initialize
       @proxy_class_map ||= @@proxy_class_map
     end
 
+    # Same as #encode!, but copies Array and Hash structures
+    # recursively.
     def encode x
       @copy = true
       encode! x
     end
 
+    # Encodes using #proxy_class_map in-place.
     def encode! x
       @root = x
       @visited = { }
@@ -26,7 +44,8 @@ module Cnu
       @copy =
       @visited = @proxyable = 
         @object_to_proxy_map = 
-        @class_proxy_cache = nil
+        @class_proxy_cache = 
+        @root = nil
       o
     end
 
