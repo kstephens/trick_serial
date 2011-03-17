@@ -1,0 +1,17 @@
+cabar:
+  version: '1.0'
+
+  component:
+    version: v0.1
+    description: 'TrickSerial - Trick Serializers with Object Proxies'
+
+  provides:
+    lib/ruby: lib
+    action:
+      test: "rake"
+    tests: spec
+    
+
+  requires:
+    component:
+      ruby: true
