@@ -1,6 +1,6 @@
-= cnu_serializer
+= trick_serial
 
-Description goes here.
+Trick Serializers using Proxies
 
 == Contributing to cnu_serializer
  

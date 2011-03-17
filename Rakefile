@@ -12,11 +12,11 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "cnu_serializer"
-  gem.homepage = "http://github.com/kstephens/cnu_serializer"
+  gem.name = "trick_serial"
+  gem.homepage = "http://github.com/kstephens/trick_serial"
   gem.license = "MIT"
   gem.summary = %Q{A Serialization Framework.}
-  gem.description = %Q{Provides delayed serialization/deserialization using proxies.}
+  gem.description = %Q{Trick Serializers using Proxies.}
   gem.email = "ks.github@kurtstephens.com"
   gem.authors = ["Kurt Stephens"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
