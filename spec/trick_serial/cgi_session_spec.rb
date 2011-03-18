@@ -45,7 +45,8 @@ describe "TrickSerial::Serializer::Cgi::Session" do
     yield if block_given?
 
     @session = CGI::Session.new(cgi,
-                                'database_manager' => @store,
+                                'TrickSerial.database_manager' => @store,
+                                'database_manager' => TrickSerial::Serializer::CgiSession::Store,
                                 'tmpdir' => @tmpdir,
                                 'session_id' => 'abc123',
                                 'session_key' => '_test',
