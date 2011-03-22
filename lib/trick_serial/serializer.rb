@@ -1,7 +1,13 @@
 
 module TrickSerial
+  # Serializes objects using proxies for classes defined in #proxy_class_map.
+  # Instances of the keys in #proxy_class_map are replaced by proxies if
+  # the proxy class returns true for #can_proxy?(instance).
+  #
+  # Container classes are extended with ProxySwizzling to automatically replace
+  # the Proxy objects with their #object when accessed.
   class Serializer
-    attr_accessor :proxy_class_map
+    attr_accessor :proxy_class_map, :verbose
     attr_reader :root
 
     @@proxy_class_map = nil
@@ -107,11 +113,18 @@ module TrickSerial
         if proxy_cls.can_proxy?(x)
           proxy = proxy_cls.new(x)
           @object_to_proxy_map[x.object_id] = proxy
+          _log { "created proxy #{proxy} for #{x.class} #{x.id}" }
           x = proxy
         end
       end
 
       x
+    end
+
+    def _log msg = nil
+      return unless @verbose
+      msg ||= yield if block_given?
+      (@_log || $stderr).puts "  #{self}: #{msg}"
     end
 
     module ObjectProxy
@@ -173,7 +186,11 @@ module TrickSerial
  
     ##################################################################
 
+    module ProxySwizzling
+    end
+
     module ProxySwizzlingArray
+      include ProxySwizzling
       def [](i)
         p = super
         if ! @does_not_have_proxies && ObjectProxy === p
@@ -204,6 +221,7 @@ module TrickSerial
     end
 
     module ProxySwizzlingHash
+      include ProxySwizzling
       def [](i)
         if ObjectProxy === (p = super)
           p = self[i] = p.object
