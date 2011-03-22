@@ -31,10 +31,10 @@ module TrickSerial
         def initialize(session, option={})
           @session = session
           @option = option
-          @dbman_cls = option.delete('TrickSerial.database_manager') || FileStore
+          @dbman_cls = option.delete(:'TrickSerial.database_manager') || FileStore
           # option['new_session'] = true 
           @option['database_manager'] = @dbman_cls
-          @serializer = option.delete('TrickSerial.serializer')
+          @serializer = option.delete(:'TrickSerial.serializer')
         end
 
         def _dbman
