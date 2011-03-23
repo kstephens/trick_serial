@@ -7,7 +7,7 @@ not store entire object graphs (e.g.: ActiveRecord object).
 
 trick_serial supports CGI::Session and Rack sessions to allow ActiveRecord::Base objects
 to be stored directly in a session.  If the object has an id, it is stored in the session
-as a proxy object composed of a the object's class name and id.  The object is restored from
+as a proxy object composed of the object's class name and id.  The object is restored from
 the database only if referenced through the session.
 
 trick_serial can be used independently of ActiveRecord and Session.  It can be configured to
