@@ -28,23 +28,28 @@ Support for CGI::Session::FileStore, CGI::Session::PStore and Rails 1.2 CGI::Ses
       # User.find(...) is executed on the demand of session[:user].
       @user ||= session[:user] 
     end
+    
     def user= x
       # [ x.class.name, x.id ] is serialized in place of User object in session[:user].
       @user = session[:user] = x 
     end
   end
+  
   class UserController < ActionController::Base
     include AuthenticatedController
+    
     def login
       if u = User.find(:first, :conditions => [ 'name = ? AND password = ?', params[:login], params[:password] ])
          self.user = u
          redirect_to :action => :home
       end
     end
+    
     def logout
        self.user = nil
        redirect_to :action => :login
     end
+    
     def home
       render :text => "You are #{user ? user.login : "NOT LOGGED IN!"}"
     end
@@ -64,18 +69,23 @@ Inside your Rails::Initializer block:
       require 'my_mem_cache_hacks' # hacks into CGI::Session::MemCacheStore
       require 'trick_serial/serializer'
       require 'trick_serial/serializer/cgi_session'
+      
       # This must be done after all session related code is loaded:
       TrickSerial::Serializer::CgiSession.activate!
+      
       serializer = TrickSerial::Serializer.new
-      # Enabled logging:
+      
+      # Enable logging:
       if false
         serializer.logger = Log4r::Logger[CNU_LOGGER_DEFAULT]
         serializer.logger_level = :debug
       end
+      
       # Instruct the serializer to create proxies for instances of any subclasses of:
       serializer.proxy_class_map = { 
         ActiveRecord::Base => TrickSerial::Serializer::ActiveRecordProxy,
       }
+      
       # Options used in CGI::Session.new(@cgi, options) from ActionController::Base.
       # See ActionController::SessionManagement for details.
       ActionController::CgiRequest::DEFAULT_SESSION_OPTIONS.
