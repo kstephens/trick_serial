@@ -7,7 +7,7 @@ module TrickSerial
   # Container classes are extended with ProxySwizzling to automatically replace
   # the Proxy objects with their #object when accessed.
   class Serializer
-    attr_accessor :proxy_class_map, :verbose
+    attr_accessor :proxy_class_map, :logger, :logger_level
     attr_reader :root
 
     @@proxy_class_map = nil
@@ -122,10 +122,12 @@ module TrickSerial
     end
 
     def _log msg = nil
-      return unless @verbose
       msg ||= yield if block_given?
-      (@_log || $stderr).puts "  #{self}: #{msg}"
+      if msg && @logger
+        @logger.send(@logger_level, msg)
+      end
     end
+
 
     module ObjectProxy
       class Error < ::Exception
@@ -178,6 +180,7 @@ module TrickSerial
       end
 
       def object
+        # STDERR.puts "#{self}#object find #{@cls.inspect} #{@id.inspect}" unless @object
         @object ||= 
           resolve_class.find(@id) || 
           (raise Error::DisappearingObject, "#{@cls.inspect} #{@id.inspect}")
@@ -230,6 +233,11 @@ module TrickSerial
       end
 
       def each
+        values
+        super
+      end
+
+      def each_pair 
         values
         super
       end

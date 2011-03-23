@@ -11,7 +11,58 @@ as a proxy object composed of a the object's class name and id.  The object is r
 the database only if referenced through the session.
 
 trick_serial can be used independently of ActiveRecord and Session can can be configured to
-use serialization proxies additional classes.
+use serialization proxies for any classes.
+
+trick_serial maintains object identity during serialization.
+
+== Features
+
+Support for CGI::Session::FileStore, CGI::Session::PStore and Rails 1.2 CGI::Session::MemCacheStore.
+
+== Configuration
+
+=== Rails 1.2 
+
+Inside your Rails::Initializer block:
+
+  Rails::Initializer.run do |config|
+    ...
+    # Configure trick_serial for Rails 1.2 MemCache Sessions:
+    begin
+      require 'action_controller/session/mem_cache_store'
+      require 'my_mem_cache_hacks' # hacks into CGI::Session::MemCacheStore
+      require 'trick_serial/serializer'
+      require 'trick_serial/serializer/cgi_session'
+      # This must be done after all session related code is loaded:
+      TrickSerial::Serializer::CgiSession.activate!
+      serializer = TrickSerial::Serializer.new
+      # Enabled logging:
+      if false
+        serializer.logger = Log4r::Logger[CNU_LOGGER_DEFAULT]
+        serializer.logger_level = :debug
+      end
+      # Instruct the serializer to create proxies for instances of any subclasses of:
+      serializer.proxy_class_map = { 
+        ActiveRecord::Base => TrickSerial::Serializer::ActiveRecordProxy,
+      }
+      # Options used in CGI::Session.new(@cgi, options) from ActionController::Base.
+      # See ActionController::SessionManagement for details.
+      ActionController::CgiRequest::DEFAULT_SESSION_OPTIONS.
+        merge!({
+                 'database_manager' => TrickSerial::Serializer::CgiSession::Store,
+                 'TrickSerial.database_manager' => ::CGI::Session::MemCacheStore,
+                 'TrickSerial.serializer' => serializer,
+                 'TrickSerial.logger' => Log4r::Logger[CNU_LOGGER_DEFAULT],
+                 'TrickSerial.logger_level' => :info,
+               })
+    end
+    config.action_controller.session_store = TrickSerial::Serializer::CgiSession::Store
+    ...
+  end
+
+=== Rails 3
+
+COMING SOON!
 
 == Contributing to trick_serial
  

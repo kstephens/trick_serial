@@ -27,14 +27,44 @@ module TrickSerial
       
       # Defines a Session store Decorator that interjects TrickSerial::Serializer
       # inside #restore, #update, etc.
+      #
+      # Example:
+      #
+      #   cgi = CGI.new("html4")
+      #   session = CGI::Session.new(
+      #     'database_manager' => TrickSerial::Serializer::CgiSession::Store, # The Decorator.
+      #     'TrickSerial.database_manager' => CGI::Session::PStore, # Actual store Class.
+      #     # Options for PStore instance:
+      #     'tmpdir' => '/tmp/mysessions',
+      #     'session_key' => 'mykey',
+      #     ...
+      #   )
+      #     
       class Store
+        attr_accessor :logger, :logger_level
+
+        # Options:
+        #
+        #   'TrickSerial.database_manager': the actual session Store class (e.g.: CGI::Session::PStore).
+        #   'TrickSerial.dbman': an actual session store instance.
+        #   'TrickSerial.serializer': a clonable instance of TrickSerial::Serializer.
+        #   'TrickSerial.logger': a Log4r object.
+        #   'TrickSerial.logger_level': a Symbol for the logger level (e.g: :debug)
+        #
+        # The remaining options are passed to the actual Store specified by
+        # :'TrickSerial.database_manager'.
         def initialize(session, option={})
           @session = session
           @option = option
-          @dbman_cls = option.delete(:'TrickSerial.database_manager') || FileStore
+          @dbman_cls = option.delete('TrickSerial.database_manager') ||
+            (raise "#{self} options did not specify TrickSerial.database_manager: #{option.inspect}")
+          @dbman = option.delete('TrickSerial.dbman')
           # option['new_session'] = true 
           @option['database_manager'] = @dbman_cls
-          @serializer = option.delete(:'TrickSerial.serializer')
+          @serializer = option.delete('TrickSerial.serializer')
+          @logger = option.delete('TrickSerial.logger')
+          @logger_level = option.delete('TrickSerial.logger_level') || :debug
+          _log { "creating #{self} for #{option.inspect}" }
         end
 
         def _dbman
@@ -55,12 +85,14 @@ module TrickSerial
         end
 
         def restore
+          _log { "#{self} restore" }
           _dbman.restore
           _dbman.decode_with_trick_serial_serializer! if _dbman.respond_to?(:decode_with_trick_serial_serializer!)
           _dbman._data
         end
 
         def update
+          _log { "#{self} update" }
           serializer = _make_serializer
           data_save = _dbman._data
           _dbman._data = serializer.encode(_dbman._data)
@@ -72,6 +104,7 @@ module TrickSerial
         end
 
         def close
+          _log { "#{self} close" }
           serializer = _make_serializer
           data_save = _dbman._data
           _dbman._data = serializer.encode(_dbman._data)
@@ -82,7 +115,15 @@ module TrickSerial
         end
 
         def delete
+          _log { "#{self} close" }
           _dbman.delete
+        end
+
+        def _log msg = nil
+          msg ||= yield if block_given?
+          if msg && @logger
+            @logger.send(@logger_level, msg)
+          end
         end
       end
 

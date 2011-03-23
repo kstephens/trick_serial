@@ -23,6 +23,7 @@ end
 TrickSerial::Serializer::CgiSession.activate!
 
 describe "TrickSerial::Serializer::Cgi::Session" do
+
   before(:each) do 
     @s = TrickSerial::Serializer.new
     @s.proxy_class_map = { 
@@ -55,7 +56,7 @@ describe "TrickSerial::Serializer::Cgi::Session" do
     yield if block_given?
 
     options = {
-      :'TrickSerial.database_manager' => @store,
+      'TrickSerial.database_manager' => @store,
       'database_manager' => TrickSerial::Serializer::CgiSession::Store,
       'tmpdir' => @tmpdir,
       'session_id' => 'abc123',
@@ -133,8 +134,8 @@ describe "TrickSerial::Serializer::Cgi::Session" do
     test_store! CGI::Session::PStore
   end
 
-  it "should handle CGI::Session::MemCacheStore" do
-    if $have_mem_cache_store 
+  if $have_mem_cache_store 
+    it "should handle CGI::Session::MemCacheStore" do
       begin
         memcache_pid = nil
         memcache_port = 45328
@@ -152,7 +153,7 @@ describe "TrickSerial::Serializer::Cgi::Session" do
         }
         memcache_pid = Process.fork do
           memcache_args.map!{|e| e.to_s}
-          $stderr.puts "#{__FILE__}: starting memcache #{memcache_args.inspect}"
+          $stderr.puts "#{__FILE__}: starting memcache #{memcache_args.inspect}" if $DEBUG
           Process.exec(*memcache_args)
         end
         sleep 1
