@@ -53,6 +53,12 @@ Support for CGI::Session::FileStore, CGI::Session::PStore and Rails 1.2 CGI::Ses
     def home
       render :text => "You are #{user ? user.login : "NOT LOGGED IN!"}"
     end
+
+    def update
+      raise unless user
+      user.attributes = params[:user]
+      user.save!
+    end
   end
 
 == Configuration
