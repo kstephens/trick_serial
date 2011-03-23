@@ -10,7 +10,7 @@ to be stored directly in a session.  If the object has an id, it is stored in th
 as a proxy object composed of a the object's class name and id.  The object is restored from
 the database only if referenced through the session.
 
-trick_serial can be used independently of ActiveRecord and Session can can be configured to
+trick_serial can be used independently of ActiveRecord and Session.  It can be configured to
 use serialization proxies for any classes.
 
 trick_serial maintains object identity during serialization.
@@ -18,6 +18,37 @@ trick_serial maintains object identity during serialization.
 == Features
 
 Support for CGI::Session::FileStore, CGI::Session::PStore and Rails 1.2 CGI::Session::MemCacheStore.
+
+== Usage
+
+=== ActionController session example
+
+  module AuthenticatedController
+    def user
+      # User.find(...) is executed on the demand of session[:user].
+      @user ||= session[:user] 
+    end
+    def user= x
+      # [ x.class.name, x.id ] is serialized in place of User object in session[:user].
+      @user = session[:user] = x 
+    end
+  end
+  class UserController < ActionController::Base
+    include AuthenticatedController
+    def login
+      if u = User.find(:first, :conditions => [ 'name = ? AND password = ?', params[:login], params[:password] ])
+         self.user = u
+         redirect_to :action => :home
+      end
+    end
+    def logout
+       self.user = nil
+       redirect_to :action => :login
+    end
+    def home
+      render :text => "You are #{user ? user.login : "NOT LOGGED IN!"}"
+    end
+  end
 
 == Configuration
 
