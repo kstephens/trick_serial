@@ -72,18 +72,18 @@ Inside your Rails::Initializer block:
     # Configure trick_serial for Rails 1.2 MemCache Sessions:
     begin
       require 'action_controller/session/mem_cache_store'
-      require 'my_mem_cache_hacks' # hacks into CGI::Session::MemCacheStore
       require 'trick_serial/serializer'
       require 'trick_serial/serializer/cgi_session'
       
-      # This must be done after all session related code is loaded:
+      # This must be done after all session-related code is loaded:
       TrickSerial::Serializer::CgiSession.activate!
       
+      # Create a serializer instance.
       serializer = TrickSerial::Serializer.new
       
       # Enable logging:
       if false
-        serializer.logger = Log4r::Logger[CNU_LOGGER_DEFAULT]
+        serializer.logger = Log4r::Logger[:mylogger]
         serializer.logger_level = :debug
       end
       
@@ -99,7 +99,7 @@ Inside your Rails::Initializer block:
                  'database_manager' => TrickSerial::Serializer::CgiSession::Store,
                  'TrickSerial.database_manager' => ::CGI::Session::MemCacheStore,
                  'TrickSerial.serializer' => serializer,
-                 'TrickSerial.logger' => Log4r::Logger[CNU_LOGGER_DEFAULT],
+                 'TrickSerial.logger' => Log4r::Logger[:mylogger],
                  'TrickSerial.logger_level' => :info,
                })
     end
