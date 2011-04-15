@@ -36,6 +36,17 @@ describe "TrickSerial::Serializer" do
     result.object_id.should == @h.object_id
   end
 
+  it "should honor #enabled?" do
+    enabled = true
+    @s.enabled = lambda { | | enabled }
+    result = @s.encode(@h)
+    result.object_id.should_not == @h.object_id
+
+    enabled = false
+    result = @s.encode(@h)    
+    result.object_id.should == @h.object_id
+  end
+
   it "should proxy unsaved models" do
     @o = @s.encode!(@h)
 

@@ -7,6 +7,9 @@ module TrickSerial
   # Container classes are extended with ProxySwizzling to automatically replace
   # the Proxy objects with their #object when accessed.
   class Serializer
+    # Boolean or Proc.
+    attr_accessor :enabled
+
     attr_accessor :proxy_class_map, :logger, :logger_level
     attr_reader :root
 
@@ -29,17 +32,30 @@ module TrickSerial
 
     def initialize
       @proxy_class_map ||= @@proxy_class_map
+      @enabled = true
+    end
+
+    def enabled?
+      case @enabled
+      when Proc
+        @enabled.call
+      else
+        @enabled
+      end
     end
 
     # Same as #encode!, but copies Array and Hash structures
     # recursively.
+    # Does not copy structure if #enabled? is false.
     def encode x
+      return x unless enabled?
       @copy = true
       encode! x
     end
 
     # Encodes using #proxy_class_map in-place.
     def encode! x
+      return x unless enabled?
       @root = x
       @visited = { }
       @proxyable = @proxy_class_map.keys
@@ -189,6 +205,8 @@ module TrickSerial
  
     ##################################################################
 
+    # Base module for all ProxySwizzling.
+    # http://en.wikipedia.org/wiki/Pointer_swizzling
     module ProxySwizzling
     end
 
