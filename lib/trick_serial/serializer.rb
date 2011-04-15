@@ -115,7 +115,7 @@ module TrickSerial
         if proxy = @object_to_proxy_map[x.object_id]
           return proxy
         end
-        # debugger
+         # debugger
 
         # Get the proxy class for this object.
         proxy_cls = 
@@ -131,6 +131,8 @@ module TrickSerial
           @object_to_proxy_map[x.object_id] = proxy
           _log { "created proxy #{proxy} for #{x.class} #{x.id}" }
           x = proxy
+        else
+          @object_to_proxy_map[x.object_id] = x
         end
       end
 
