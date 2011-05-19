@@ -24,6 +24,12 @@ end
 module TrickSerial
   class Serializer
     module Test
+      class A
+        attr_accessor :x, :y
+      end
+      class B
+        attr_accessor :x, :y
+      end
       class PhonyActiveRecord
         attr_accessor :id
 

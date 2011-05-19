@@ -26,8 +26,9 @@ describe "TrickSerial::Serializer::Cgi::Session" do
 
   before(:each) do 
     @s = TrickSerial::Serializer.new
-    @s.proxy_class_map = { 
-      TrickSerial::Serializer::Test::PhonyActiveRecord => TrickSerial::Serializer::ActiveRecordProxy,
+    @s.class_option_map = { 
+      TrickSerial::Serializer::Test::PhonyActiveRecord => 
+      { :proxy_class => TrickSerial::Serializer::ActiveRecordProxy, },
     }
 
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
