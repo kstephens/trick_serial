@@ -7,11 +7,13 @@ require 'trick_serial'
 # in ./support/ and its subdirectories.
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
+=begin
 if $DEBUG || ENV['DEBUG']
   require 'rubygems'
   gem 'ruby-debug'
   require 'ruby-debug'
 end
+=end
 
 RSpec.configure do |config|
   
