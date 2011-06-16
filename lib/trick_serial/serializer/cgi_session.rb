@@ -23,6 +23,9 @@ module TrickSerial
         if defined? ::CGI::Session::MemCacheStore
           ::CGI::Session::MemCacheStore.send(:include, MemCacheStoreSerializer)
         end
+        if defined? ::CGI::Session::CassandraStore
+          ::CGI::Session::CassandraStore.send(:include, CassandraStoreSerializer)
+        end
       end
       
       # Defines a Session store Decorator that interjects TrickSerial::Serializer
@@ -219,6 +222,12 @@ module TrickSerial
       end
       
       module MemCacheStoreSerializer
+        include SessionStoreDataHook
+        def _data; @session_data; end
+        def _data=x; @session_data = x; end
+      end
+      
+      module CassandraStoreSerializer
         include SessionStoreDataHook
         def _data; @session_data; end
         def _data=x; @session_data = x; end
