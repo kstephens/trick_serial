@@ -108,10 +108,9 @@ module TrickSerial
     # Returns a list of Modules that are proxable based on the configuration.
     def proxyable
       unless @proxyable
-        @proxyable = @class_option_map.keys.to_a
-        @proxyable.compact!
-        @proxyable.uniq!
-        @class_option_cache = { }
+        @proxyable = @class_option_map.keys.select{|cls| ! @class_option_map[cls][:do_not_traverse]}
+        @do_not_traverse ||= @class_option_map.keys.select{|cls| @class_option_map[cls][:do_not_traverse]} << ObjectProxy
+        @class_option_cache ||= { }
         @proxyable.freeze
       end
       @proxyable
@@ -125,15 +124,15 @@ module TrickSerial
       # pp [ :_encode!, x.class, x ]
 
       case x
-      when ObjectProxy
-        x
+      when *@do_not_traverse
+        # NOTHING
 
       when Array
         if o = @visited[x.object_id]
           return o.first
         end
         o = x
-        x = x.dup if @copy
+        x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
         extended = false
         x.map! do | v |
@@ -150,7 +149,7 @@ module TrickSerial
           return o.first
         end
         o = x
-        x = x.dup if @copy
+        x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
         extended = false
         x.keys.to_a.each do | k |
@@ -215,10 +214,28 @@ module TrickSerial
       x
     end
 
+    def _copy_with_extensions x
+      if @copy 
+        o = x.dup
+        (_extended_by(x) - _extended_by(o)).reverse_each do | m |
+          o.extend(m)
+        end rescue nil # :symbol.extend(m) => TypeError: can't define singleton
+        x = o
+      end
+      x
+    end
+
+    # This is similar to Rails Object#extended_by.
+    def _extended_by x
+      # Note: if Symbol === x this happens:
+      # #<TypeError: no virtual class for Symbol>
+      (class << x; ancestors; end) rescue [ ]
+    end
+
     def _log msg = nil
-      msg ||= yield if block_given?
-      if msg && @logger
-        @logger.send(@logger_level, msg)
+      if @logger
+        msg ||= yield if block_given?
+        @logger.send(@logger_level, msg) if msg
       end
     end
 
