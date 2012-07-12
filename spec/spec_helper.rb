@@ -8,9 +8,11 @@ require 'trick_serial'
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
 =begin
-require 'rubygems'
-gem 'ruby-debug'
-require 'ruby-debug'
+if $DEBUG || ENV['DEBUG']
+  require 'rubygems'
+  gem 'ruby-debug'
+  require 'ruby-debug'
+end
 =end
 
 RSpec.configure do |config|
@@ -24,6 +26,12 @@ end
 module TrickSerial
   class Serializer
     module Test
+      class A
+        attr_accessor :x, :y
+      end
+      class B
+        attr_accessor :x, :y
+      end
       class PhonyActiveRecord
         attr_accessor :id
 

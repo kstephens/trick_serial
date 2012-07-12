@@ -11,4 +11,7 @@ group :development do
   gem "bundler", "~> 1.0.0"
   gem "jeweler", "~> 1.5.2"
   gem "rcov", ">= 0"
+  gem 'ruby-debug', ">= 0"
+  gem 'rails', "~> 1.2.6"
+  gem 'memcache-client', ">= 1.7.0"
 end

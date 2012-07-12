@@ -2,7 +2,116 @@
 
 Trick Serializers using Proxies
 
-== Contributing to cnu_serializer
+Serialize objects using Proxies to trick serializers (e.g.: Marshal) to 
+not store entire object graphs (e.g.: ActiveRecord object).
+
+trick_serial supports CGI::Session and Rack sessions to allow ActiveRecord::Base objects
+to be stored directly in a session.  If the object has an id, it is stored in the session
+as a proxy object composed of the object's class name and id.  The object is restored from
+the database only if referenced through the session.
+
+trick_serial can be used independently of ActiveRecord and Session.  It can be configured to
+use serialization proxies for any classes.
+
+trick_serial maintains object identity during serialization.
+
+== Features
+
+Support for CGI::Session::FileStore, CGI::Session::PStore and Rails 1.2 CGI::Session::MemCacheStore.
+
+== Usage
+
+=== ActionController session example
+
+  module AuthenticatedController
+    def user
+      # User.find(...) is executed on the demand of session[:user].
+      @user ||= session[:user] 
+    end
+    
+    def user= x
+      # [ x.class.name, x.id ] is serialized in place of User object in session[:user].
+      @user = session[:user] = x 
+    end
+  end
+  
+  class UserController < ActionController::Base
+    include AuthenticatedController
+    
+    def login
+      if u = User.find(:first, :conditions => [ 'name = ? AND password = ?', params[:login], params[:password] ])
+         self.user = u
+         redirect_to :action => :home
+      end
+    end
+    
+    def logout
+       self.user = nil
+       redirect_to :action => :login
+    end
+    
+    def home
+      render :text => "You are #{user ? user.login : "NOT LOGGED IN!"}"
+    end
+
+    def update
+      raise unless user
+      user.attributes = params[:user]
+      user.save!
+    end
+  end
+
+== Configuration
+
+=== Rails 1.2 
+
+Inside your Rails::Initializer block:
+
+  Rails::Initializer.run do |config|
+    ...
+    # Configure trick_serial for Rails 1.2 MemCache Sessions:
+    begin
+      require 'action_controller/session/mem_cache_store'
+      require 'trick_serial/serializer'
+      require 'trick_serial/serializer/cgi_session'
+      
+      # This must be done after all session-related code is loaded:
+      TrickSerial::Serializer::CgiSession.activate!
+      
+      # Create a serializer instance.
+      serializer = TrickSerial::Serializer.new
+      
+      # Enable logging:
+      if false
+        serializer.logger = Log4r::Logger[:mylogger]
+        serializer.logger_level = :debug
+      end
+      
+      # Instruct the serializer to create proxies for instances of any subclasses of:
+      serializer.proxy_class_map = { 
+        ActiveRecord::Base => TrickSerial::Serializer::ActiveRecordProxy,
+      }
+      
+      # Options used in CGI::Session.new(@cgi, options) from ActionController::Base.
+      # See ActionController::SessionManagement for details.
+      ActionController::CgiRequest::DEFAULT_SESSION_OPTIONS.
+        merge!({
+                 'database_manager' => TrickSerial::Serializer::CgiSession::Store,
+                 'TrickSerial.database_manager' => ::CGI::Session::MemCacheStore,
+                 'TrickSerial.serializer' => serializer,
+                 'TrickSerial.logger' => Log4r::Logger[:mylogger],
+                 'TrickSerial.logger_level' => :info,
+               })
+    end
+    config.action_controller.session_store = TrickSerial::Serializer::CgiSession::Store
+    ...
+  end
+
+=== Rails 3
+
+COMING SOON!
+
+== Contributing to trick_serial
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it

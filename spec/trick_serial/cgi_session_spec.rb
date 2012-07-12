@@ -10,13 +10,25 @@ require 'cgi/session/pstore'
 require 'fileutils'
 require 'stringio'
 
+$have_mem_cache_store = false
+begin
+  require 'action_controller/session/mem_cache_store'
+  require 'trick_serial/serializer/cgi_session'
+  $have_mem_cache_store = true
+rescue Exception => err
+  $stderr.puts "#{__FILE__}: #{err.inspect}\n  #{err.backtrace * "\n  "}"
+end
+
+
 TrickSerial::Serializer::CgiSession.activate!
 
 describe "TrickSerial::Serializer::Cgi::Session" do
+
   before(:each) do 
     @s = TrickSerial::Serializer.new
-    @s.proxy_class_map = { 
-      TrickSerial::Serializer::Test::PhonyActiveRecord => TrickSerial::Serializer::ActiveRecordProxy,
+    @s.class_option_map = { 
+      TrickSerial::Serializer::Test::PhonyActiveRecord => 
+      { :proxy_class => TrickSerial::Serializer::ActiveRecordProxy, },
     }
 
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
@@ -35,7 +47,7 @@ describe "TrickSerial::Serializer::Cgi::Session" do
 
   attr_accessor :cgi, :session
 
-  def create_session!
+  def create_session! options
     @cgi = CGI.new("html4")
     def @cgi.env_table; @env_table ||= { }; end
     def @cgi.stdinput; @stdinput ||= StringIO.new; end
@@ -44,22 +56,25 @@ describe "TrickSerial::Serializer::Cgi::Session" do
 
     yield if block_given?
 
-    @session = CGI::Session.new(cgi,
-                                'database_manager' => @store,
-                                'tmpdir' => @tmpdir,
-                                'session_id' => 'abc123',
-                                'session_key' => '_test',
-                                'session_expires' => Time.now + 30 + 30,
-                                'prefix' => '_test')
+    options = {
+      'TrickSerial.database_manager' => @store,
+      'database_manager' => TrickSerial::Serializer::CgiSession::Store,
+      'tmpdir' => @tmpdir,
+      'session_id' => 'abc123',
+      'session_key' => '_test',
+      'session_expires' => Time.now + 30 + 30,
+      'prefix' => '_test',
+    }.merge(options)
+    @session = CGI::Session.new(cgi, options)
   end
 
-  def test_store! store
+  def test_store! store, options = { }
     @tmpdir = "/tmp/#{File.basename(__FILE__)}-#{$$}"
     FileUtils.mkdir_p(@tmpdir)
 
     @store = store
 
-    create_session!
+    create_session! options
 
     @session['a'] = 1
     @session['b'] = :b
@@ -72,21 +87,7 @@ describe "TrickSerial::Serializer::Cgi::Session" do
     @session.update
     @session.close
 
-=begin
-    outheader = @cgi.header
-    # $stderr.puts "cgi.header=\n#{outheader}\n"
-    outheader =~ /^Set-Cookie: ([^;]*;)/
-    raw_cookie = $1 || (raise "Cannot file Set-Cookie in header.")
-    $stderr.puts "raw_cookie = #{raw_cookie.inspect}"
-
-    ##################################################################
-
-    create_session! do
-      @cgi.env_table["HTTP_COOKIE"] = raw_cookie
-    end
-=end
-
-    create_session!
+    create_session! options
 
     fm = TrickSerial::Serializer::Test::PhonyActiveRecord.find_map
     fm.clear
@@ -134,5 +135,35 @@ describe "TrickSerial::Serializer::Cgi::Session" do
     test_store! CGI::Session::PStore
   end
 
+  if $have_mem_cache_store 
+    it "should handle CGI::Session::MemCacheStore" do
+      begin
+        memcache_pid = nil
+        memcache_port = 45328
+        memcache_host = '127.0.0.1'
+        memcache_args = [ "memcached", 
+                          "-p", memcache_port,
+                          "-l", memcache_host,
+                        ]
+        memcache_args << "-vvv" if $DEBUG
+
+        cache = ::MemCache.new(memcache_host)
+        cache.servers = "#{memcache_host}:#{memcache_port}"
+        session_opts = { 
+          'cache' => cache,
+        }
+        memcache_pid = Process.fork do
+          memcache_args.map!{|e| e.to_s}
+          $stderr.puts "#{__FILE__}: starting memcache #{memcache_args.inspect}" if $DEBUG
+          Process.exec(*memcache_args)
+        end
+        sleep 1
+        test_store! CGI::Session::MemCacheStore, session_opts
+      ensure
+        sleep 1
+        Process.kill(9, memcache_pid) if memcache_pid
+      end
+    end
+  end
 end
 
