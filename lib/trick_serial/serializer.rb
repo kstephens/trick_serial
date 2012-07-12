@@ -190,7 +190,8 @@ module TrickSerial
           # Deeply encode instance vars?
           if ivs = class_option[:instance_vars]
             ivs = x.instance_variables if ivs == true
-            x = x.dup if @copy
+            x = _copy_with_extensions x
+            @object_to_proxy_map[o.object_id] = [ x, o ]
             ivs.each do | ivar |
               v = x.instance_variable_get(ivar)
               v = _encode!(v)

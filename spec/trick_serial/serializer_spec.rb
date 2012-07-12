@@ -1,6 +1,7 @@
 require File.expand_path('../../spec_helper', __FILE__)
 
 require 'trick_serial/serializer'
+require 'ostruct'
 
 ######################################################################
 
@@ -14,6 +15,7 @@ describe "TrickSerial::Serializer" do
       t::PhonyActiveRecord => { :proxy_class => TrickSerial::Serializer::ActiveRecordProxy, },
       t::A => { :instance_vars => true },
       t::B => { :instance_vars => [ "@x" ] },
+      ::OpenStruct => { :instance_vars => true },
     }
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
     # Note: Structs are anonymous Classes and cannot be Marshal'ed.
@@ -30,10 +32,14 @@ describe "TrickSerial::Serializer" do
       :a => [ 0, 1, @m, 3, 4, @m ],
       :m_unsaved => @m_unsaved,
       :s => @struct.new,
+      :os => OpenStruct.new,
     }
     @h[:s].m = @m
     @h[:s].a = @h
     @h[:s].b = 'b'
+    @h[:os].m = @m
+    @h[:os].a = @h
+    @h[:os].b = 'b'
     @h[:a2] = @h[:a]
     @h[:h2] = @h
   end
@@ -58,6 +64,21 @@ describe "TrickSerial::Serializer" do
     result[:s].m.class.should == TrickSerial::Serializer::ActiveRecordProxy
     result[:s].a.object_id.should == @h.object_id
     result[:s].b.object_id.should == @h[:s].b.object_id
+  end
+
+  it "should handle #encode! of OpenStruct" do
+    @h[:os].m.should == @m
+    @h[:os].a.should == @h
+
+    $pry = true
+    result = @s.encode!(@h)
+    $pry = false
+
+    result.object_id.should == @h.object_id
+    result[:os].class.should == @h[:os].class
+    result[:os].m.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:os].a.object_id.should == @h.object_id
+    result[:os].b.object_id.should == @h[:os].b.object_id
   end
 
   it "should honor #enabled?" do
