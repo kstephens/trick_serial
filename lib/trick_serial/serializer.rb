@@ -169,12 +169,18 @@ module TrickSerial
         x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
         extended = false
-        x.keys.to_a.each do | k |
-          v = x[k] = _encode!(x[k])
+        key_map = [ ]
+        x.each do | k, v |
+          v = _encode!(v)
           if ! extended && ObjectProxy === v
             x.extend ProxySwizzlingHash
             extended = true
           end
+          key_map << [ _encode!(k), v]
+        end
+        x.clear
+        key_map.each do | k, v |
+          x[k] = v
         end
 
       when *@proxyable
@@ -218,7 +224,7 @@ module TrickSerial
        ]).first
     end
 
-    # Create a proxy for x for orginal object o.
+    # Create a proxy for x for original object o.
     # x may be a dup of o.
     def _make_proxy o, x, proxy_cls
       # Can the object x be proxied for the original object o?

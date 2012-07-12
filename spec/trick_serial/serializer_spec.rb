@@ -85,6 +85,20 @@ describe "TrickSerial::Serializer" do
     @o[:m_unsaved].object_id.should == @m_unsaved.object_id
   end
 
+  it "should handle encode of Hash keys" do
+    @h[:h2] = {
+      @m => "A Model!"
+    }
+    result = @s.encode!(@h)
+
+    result.object_id.should == @h.object_id
+    h2 = result[:h2]
+    h2.keys.size.should == 1
+    k = h2.keys.first
+    k.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    h2[k].should == "A Model!"
+  end
+
   it "should handle proxy swizzling through Hash#[]" do
     @s.encode!(@h)
     p = @h[:m]
