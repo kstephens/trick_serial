@@ -54,7 +54,20 @@ module TrickSerial
 
       case x
       when ObjectProxy
-        x
+        # NOTHING
+
+      when Struct
+        if o = @visited[x.object_id]
+          return o
+        end
+        o = @copy ? x.dup : x
+        @visited[x.object_id] = o
+        x = o
+        x.class.members.each do | m |
+          v = x.send(m)
+          v = _encode! v
+          x.send(:"#{m}=", v)
+        end
 
       when Array
         if o = @visited[x.object_id]

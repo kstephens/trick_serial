@@ -11,7 +11,8 @@ describe "TrickSerial::Serializer" do
       TrickSerial::Serializer::Test::PhonyActiveRecord => TrickSerial::Serializer::ActiveRecordProxy,
     }
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
-
+    # Note: Structs are anonymous Classes and cannot be Marshal'ed.
+    @struct = Struct.new :m, :a, :b
     @m = TrickSerial::Serializer::Test::Model.new(123)
     @m_unsaved = TrickSerial::Serializer::Test::Model.new(:unsaved)
     @m_unsaved.id = nil
@@ -22,7 +23,11 @@ describe "TrickSerial::Serializer" do
       :m => @m,
       :a => [ 0, 1, @m, 3, 4, @m ],
       :m_unsaved => @m_unsaved,
+      :s => @struct.new,
     }
+    @h[:s].m = @m
+    @h[:s].a = @h
+    @h[:s].b = 'b'
     @h[:a2] = @h[:a]
     @h[:h2] = @h
   end
@@ -34,6 +39,19 @@ describe "TrickSerial::Serializer" do
     result = @s.encode!(@h)
 
     result.object_id.should == @h.object_id
+  end
+
+  it "should handle #encode! of Struct" do
+    @h[:s].m.should == @m
+    @h[:s].a.should == @h
+
+    result = @s.encode!(@h)
+
+    result.object_id.should == @h.object_id
+    result[:s].class.should == @struct
+    result[:s].m.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:s].a.object_id.should == @h.object_id
+    result[:s].b.object_id.should == @h[:s].b.object_id
   end
 
   it "should proxy unsaved models" do
@@ -114,6 +132,8 @@ describe "TrickSerial::Serializer" do
 
     @s.encode!(@h)
 
+    # Note: Structs are anonymous Classes and cannot be Marshal'ed.
+    @h[:s] = nil
     @h = Marshal.load(Marshal.dump(@h))
 
     fm[@m.id].should == nil
@@ -144,6 +164,8 @@ describe "TrickSerial::Serializer" do
   it "should produce a serializable result" do
     @s.encode!(@h)
 
+    # Note: Structs are anonymous Classes and cannot be Marshal'ed.
+    @h[:s] = nil
     @o = Marshal.load(Marshal.dump(@h))
 
     p = @o[:m]
