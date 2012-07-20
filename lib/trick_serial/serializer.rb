@@ -136,7 +136,7 @@ module TrickSerial
         end
         o = x
         x = _copy_with_extensions(x)
-        @visited[x.object_id] = [ x, o ]
+        @visited[o.object_id] = [ x, o ]
         x = o
         x.class.members.each do | m |
           v = x.send(m)
