@@ -19,7 +19,7 @@ describe "TrickSerial::Serializer" do
     }
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
     # Note: Structs are anonymous Classes and cannot be Marshal'ed.
-    @struct = Struct.new :m, :a, :b
+    @struct = Struct.new :sm, :sa, :sb
     @m = TrickSerial::Serializer::Test::Model.new(123)
     @m2 = TrickSerial::Serializer::Test::Model.new(456)
     @m_unsaved = TrickSerial::Serializer::Test::Model.new(:unsaved)
@@ -34,12 +34,12 @@ describe "TrickSerial::Serializer" do
       :s => @struct.new,
       :os => OpenStruct.new,
     }
-    @h[:s].m = @m
-    @h[:s].a = @h
-    @h[:s].b = 'b'
-    @h[:os].m = @m
-    @h[:os].a = @h
-    @h[:os].b = 'b'
+    @h[:s].sm = @m2
+    @h[:s].sa = @h
+    @h[:s].sb = 'b'
+    @h[:os].osm = @m
+    @h[:os].osa = @h
+    @h[:os].osb = 'b'
     @h[:a2] = @h[:a]
     @h[:h2] = @h
   end
@@ -54,31 +54,35 @@ describe "TrickSerial::Serializer" do
   end
 
   it "should handle #encode! of Struct" do
-    @h[:s].m.should == @m
-    @h[:s].a.should == @h
+    @h[:s].sm.should == @m2
+    @h[:s].sa.should == @h
+    @h[:s].sb = @h[:s] # self-reference
 
     result = @s.encode!(@h)
 
     result.object_id.should == @h.object_id
     result[:s].class.should == @struct
-    result[:s].m.class.should == TrickSerial::Serializer::ActiveRecordProxy
-    result[:s].a.object_id.should == @h.object_id
-    result[:s].b.object_id.should == @h[:s].b.object_id
+    result[:s].sm.id.should == @m2.id
+    result[:s].sm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:s].sa.object_id.should == @h.object_id
+    result[:s].sb.object_id.should == @h[:s].sb.object_id
+    result[:s].sb.object_id.should == result[:s].object_id
   end
 
   it "should handle #encode! of OpenStruct" do
-    @h[:os].m.should == @m
-    @h[:os].a.should == @h
+    @h[:os].osm.should == @m
+    @h[:os].osa.should == @h
+    @h[:os].osos = @h[:os] # self-reference
 
-    $pry = true
     result = @s.encode!(@h)
-    $pry = false
 
     result.object_id.should == @h.object_id
     result[:os].class.should == @h[:os].class
-    result[:os].m.class.should == TrickSerial::Serializer::ActiveRecordProxy
-    result[:os].a.object_id.should == @h.object_id
-    result[:os].b.object_id.should == @h[:os].b.object_id
+    result[:os].osm.id.should == @m.id
+    result[:os].osm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:os].osa.object_id.should == @h.object_id
+    result[:os].osb.object_id.should == @h[:os].osb.object_id
+    result[:os].osos.object_id.should == result[:os].object_id
   end
 
   it "should honor #enabled?" do

@@ -144,6 +144,19 @@ module TrickSerial
           x.send(:"#{m}=", v)
         end
 
+      when OpenStruct
+        if o = @visited[x.object_id]
+          return o.first
+        end
+        o = x
+        x = _copy_with_extensions(x)
+        @visited[o.object_id] = [ x, o ]
+        x = o
+        t = x.instance_variable_get("@table")
+        t.each do | k, v |
+          t[k] = _encode! v
+        end
+
       when Array
         if o = @visited[x.object_id]
           return o.first
