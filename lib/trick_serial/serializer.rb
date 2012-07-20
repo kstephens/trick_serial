@@ -179,19 +179,23 @@ module TrickSerial
 
       when *@proxyable
         if proxy = @object_to_proxy_map[x.object_id]
+          # if @debug >= 1
+          #   o = proxy.first
+          #   $stderr.puts "  #{x.class} #{x.object_id} ==>> (#{o.class} #{o.object_id})"
+          # end
           return proxy.first
         end
         # debugger
 
         o = x
-        proxy_cls = nil
+        proxy_x = proxy_cls = nil
         if class_option = _class_option(x)
           proxy_cls = class_option[:proxy_class]
           # Deeply encode instance vars?
           if ivs = class_option[:instance_vars]
             ivs = x.instance_variables if ivs == true
             x = _copy_with_extensions x
-            @object_to_proxy_map[o.object_id] = [ x, o ]
+            proxy_x = _make_proxy o, x, proxy_cls
             ivs.each do | ivar |
               v = x.instance_variable_get(ivar)
               v = _encode!(v)
@@ -201,10 +205,11 @@ module TrickSerial
               end
               x.instance_variable_set(ivar, v)
             end
+          else
+            proxy_x = _make_proxy o, x, proxy_cls
           end
         end
-        
-        x = _make_proxy o, x, proxy_cls
+        x = proxy_x if proxy_cls
       end
 
       x
@@ -219,7 +224,7 @@ module TrickSerial
        ]).first
     end
 
-    # Create a proxy for x for orginal object o.
+    # Create a proxy for x for original object o.
     # x may be a dup of o.
     def _make_proxy o, x, proxy_cls
       # Can the object x be proxied for the original object o?
