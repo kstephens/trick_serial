@@ -118,7 +118,7 @@ module TrickSerial
         end
 
         def delete
-          _log { "#{self} close" }
+          _log { "#{self} delete" }
           _dbman.delete
         end
 
