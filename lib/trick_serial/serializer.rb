@@ -43,6 +43,7 @@ module TrickSerial
     def initialize
       @class_option_map ||= @@class_option_map || EMPTY_Hash
       @enabled = true
+      @debug = 0
     end
 
     def enabled?
@@ -121,7 +122,7 @@ module TrickSerial
 
 
     def _encode! x
-      # pp [ :_encode!, x.class, x ]
+      # pp [ :_encode!, x.class, x.object_id, x.to_s ] if @debug >= 1
 
       case x
       when *@do_not_traverse
@@ -183,6 +184,7 @@ module TrickSerial
         @visited[o.object_id] = [ x, o ]
         extended = false
         x.keys.to_a.each do | k |
+          # pp [ :Hash_key, k ] if @debug >= 1
           v = x[k] = _encode!(x[k])
           if ! extended && ObjectProxy === v
             x.extend ProxySwizzlingHash
@@ -224,6 +226,8 @@ module TrickSerial
         end
         x = proxy_x if proxy_cls
       end
+
+      # pp [ :"_encode!=>", x.class, x.object_id, x.to_s ] if @debug >= 1
 
       x
     end # def
