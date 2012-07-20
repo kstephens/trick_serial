@@ -40,8 +40,9 @@ module TrickSerial
           @@find_map
         end
 
+        @@id ||= 0
         def initialize
-          @id = object_id
+          @id = (@@id += 1)
         end
         def self.find(id)
           obj = new
@@ -52,6 +53,10 @@ module TrickSerial
           @@find_map[id] += 1
           obj
         end
+
+        def to_s
+          super.sub!(/>$/, " id=#{@id.inspect}>")
+        end
       end
       
       class Model < PhonyActiveRecord
@@ -59,6 +64,10 @@ module TrickSerial
         def initialize x = nil
           super()
           @state = x
+        end
+
+        def to_s
+          super.sub!(/>$/, " @state=#{@state.inspect}>")
         end
       end
     end
