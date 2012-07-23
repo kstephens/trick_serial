@@ -154,7 +154,8 @@ module TrickSerial
         @visited[o.object_id] = [ x, o ]
         x = o
         t = x.instance_variable_get("@table")
-        t.each do | k, v |
+        t.keys.to_a.each do | k |
+          v = t._get_without_trick_serial(k)
           t[k] = _encode! v
         end
 
@@ -166,13 +167,14 @@ module TrickSerial
         x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
         extended = false
-        x.map! do | v |
+        x.size.times do | i |
+          v = x._get_without_trick_serial(i)
           v = _encode! v
           if ! extended && ObjectProxy === v
             x.extend ProxySwizzlingArray
             extended = true
           end
-          v
+          x[i] = v
         end
 
       when Hash
@@ -185,7 +187,7 @@ module TrickSerial
         extended = false
         x.keys.to_a.each do | k |
           # pp [ :Hash_key, k ] if @debug >= 1
-          v = x[k] = _encode!(x[k])
+          v = x[k] = _encode!(x._get_without_trick_serial(k))
           if ! extended && ObjectProxy === v
             x.extend ProxySwizzlingHash
             extended = true
@@ -423,5 +425,14 @@ module TrickSerial
 
   end # class
 end # module
+
+class Array
+  alias :_get_without_trick_serial :[]
+end
+
+# Get values without triggering ProxySwizzling.
+class Hash
+  alias :_get_without_trick_serial :[]
+end
 
 
