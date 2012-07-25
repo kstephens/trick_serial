@@ -138,7 +138,6 @@ module TrickSerial
         o = x
         x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
-        x = o
         x.class.members.each do | m |
           v = x.send(m)
           v = _encode! v

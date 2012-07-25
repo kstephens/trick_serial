@@ -62,10 +62,28 @@ describe "TrickSerial::Serializer" do
 
     result.object_id.should == @h.object_id
     result[:s].class.should == @struct
+    result[:s].sm.object_id.should_not == @m2.object_id
     result[:s].sm.id.should == @m2.id
     result[:s].sm.class.should == TrickSerial::Serializer::ActiveRecordProxy
     result[:s].sa.object_id.should == @h.object_id
     result[:s].sb.object_id.should == @h[:s].sb.object_id
+    result[:s].sb.object_id.should == result[:s].object_id
+  end
+
+  it "should handle #encode of Struct" do
+    @h[:s].sm.should == @m2
+    @h[:s].sa.should == @h
+    @h[:s].sb = @h[:s] # self-reference
+
+    result = @s.encode(@h)
+
+    result.object_id.should_not == @h.object_id
+    result[:s].class.should == @struct
+    result[:s].sm.object_id.should_not == @m2.object_id
+    result[:s].sm.id.should == @m2.id
+    result[:s].sm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:s].sa.object_id.should_not == @h.object_id
+    result[:s].sb.object_id.should_not == @h[:s].sb.object_id
     result[:s].sb.object_id.should == result[:s].object_id
   end
 
