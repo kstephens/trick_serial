@@ -247,6 +247,39 @@ describe "TrickSerial::Serializer" do
     fm.keys.size.should == 1
   end
 
+  it "should encode/decode proxies only once" do
+    fm = TrickSerial::Serializer::Test::PhonyActiveRecord.find_map
+
+    fm[@m.id].should == nil
+
+    # Encode once.
+    @s.encode!(@h)
+
+    # Note: Structs are anonymous Classes and cannot be Marshal'ed.
+    @h[:s] = nil
+    @h = Marshal.load(Marshal.dump(@h))
+
+    fm[@m.id].should == nil
+
+    # Encode again.
+    @s.encode!(@h)
+    @h = Marshal.load(Marshal.dump(@h))
+
+    fm[@m.id].should == nil
+
+    # ProxySwizzling occurs only once.
+    p = @h[:m]
+
+    fm[@m.id].should == 1
+
+    @h[:m].object_id.should == p.object_id
+    @h[:a][2].object_id.should == p.object_id
+    @h[:a][5].object_id.should == p.object_id
+
+    fm[@m.id].should == 1
+    fm.keys.size.should == 1
+  end
+
   it "should preserve object identity" do
     @s.encode!(@h)
 
