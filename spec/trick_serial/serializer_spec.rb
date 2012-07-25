@@ -73,6 +73,11 @@ describe "TrickSerial::Serializer" do
     @h[:os].osm.should == @m
     @h[:os].osa.should == @h
     @h[:os].osos = @h[:os] # self-reference
+    os = @h[:os]
+
+    os.respond_to?(:osm).should == true
+    os.respond_to?(:osa).should == true
+    os.respond_to?(:osos).should == true
 
     result = @s.encode!(@h)
 
@@ -83,6 +88,38 @@ describe "TrickSerial::Serializer" do
     result[:os].osa.object_id.should == @h.object_id
     result[:os].osb.object_id.should == @h[:os].osb.object_id
     result[:os].osos.object_id.should == result[:os].object_id
+
+    os = result[:os]
+    os.respond_to?(:osm).should == true
+    os.respond_to?(:osa).should == true
+    os.respond_to?(:osos).should == true
+  end
+
+  it "should handle #encode of OpenStruct" do
+    @h[:os].osm.should == @m
+    @h[:os].osa.should == @h
+    @h[:os].osos = @h[:os] # self-reference
+    os = @h[:os]
+
+    os.respond_to?(:osm).should == true
+    os.respond_to?(:osa).should == true
+    os.respond_to?(:osos).should == true
+
+    result = @s.encode(@h)
+
+    result.object_id.should_not == @h.object_id
+    result[:os].class.should == @h[:os].class
+    result[:os].object_id.should_not == @h[:os].object_id
+    result[:os].osm.id.should == @m.id
+    result[:os].osm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:os].osa.object_id.should_not == @h.object_id
+    result[:os].osb.object_id.should == @h[:os].osb.object_id
+    # result[:os].osos.object_id.should == result[:os].object_id
+
+    os = result[:os]
+    os.respond_to?(:osm).should == true
+    os.respond_to?(:osa).should == true
+    os.respond_to?(:osos).should == true
   end
 
   it "should honor #enabled?" do
