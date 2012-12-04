@@ -16,11 +16,13 @@ describe "TrickSerial::Serializer::Simple" do
       t::B => { :instance_vars => [ "@x" ] },
     }
     TrickSerial::Serializer::Test::PhonyActiveRecord.find_map.clear
-
+    # Note: Structs are anonymous Classes and cannot be Marshal'ed.
+    @struct = Struct.new :sm, :sa, :sb
     @m = TrickSerial::Serializer::Test::Model.new(123)
     @m2 = TrickSerial::Serializer::Test::Model.new(456)
     @m_unsaved = TrickSerial::Serializer::Test::Model.new(:unsaved)
     @m_unsaved.id = nil
+    @os = OpenStruct.new
     @h = {
       :a => 1,
       'b' => 2,
@@ -28,7 +30,11 @@ describe "TrickSerial::Serializer::Simple" do
       :m => @m,
       :a => [ 0, 1, @m, 3, 4, @m ],
       :m_unsaved => @m_unsaved,
+      :os => @os,
     }
+    @os.osm = @m
+    @os.osa = @h
+    @os.osb = 'b'
     @h[:a2] = @h[:a]
     @h[:h2] = @h
   end
@@ -62,7 +68,38 @@ describe "TrickSerial::Serializer::Simple" do
     result.object_id.should == @h.object_id
   end
 
-  it "should proxy unsaved models" do
+  it "should proxy saved models directly" do
+    @s.debug = 0
+
+    @o = @s.encode!(@m)
+    @o.object_id.should_not == @m.object_id
+    @o.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    @o.cls.should == @m.class.name.to_sym
+    @o.id.should == @m.id
+
+    @o = @s.decode!(@o)
+
+    @o.object_id.should_not == @m.object_id
+    @o.class.should == @m.class
+    @o.id.should == @m.id
+  end
+
+  it "should not proxy saved models twice" do
+    @s.debug = 0
+
+    @o = @s.encode!(@m)
+    @o.object_id.should_not == @m.object_id
+    @o.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    @o.cls.should == @m.class.name.to_sym
+    @o.id.should == @m.id
+
+    @o1 = @o
+    @o = @s.encode!(@o)
+    @o.object_id.should == @o1.object_id
+    @o.class.should == TrickSerial::Serializer::ActiveRecordProxy
+  end
+
+  it "should proxy saved models" do
     @o = @s.encode!(@h)
     @o = @s.decode!(@o)
     @o[:m].object_id.should_not == @m.object_id
@@ -154,6 +191,27 @@ describe "TrickSerial::Serializer::Simple" do
     a.should == p
   end
 
+  it "should handle encode/decode through OpenStruct" do
+    @o = @s.encode!(@os)
+    @o.osm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    @o = @s.decode!(@o)
+    @o.object_id.should == @os.object_id
+    @o.osm.class.should == TrickSerial::Serializer::Test::Model
+  end
+
+  it "should handle encode/decode through OpenStruct" do
+    s = @struct.new
+    s.sm = @m
+    s.sa = 'a'
+    s.sb = :b
+
+    @o = @s.encode!(s)
+    @o.sm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    @o = @s.decode!(@o)
+    @o.object_id.should == s.object_id
+    @o.sm.class.should == TrickSerial::Serializer::Test::Model
+  end
+
   it "should lazily traverse proxies" do
     fm = TrickSerial::Serializer::Test::PhonyActiveRecord.find_map
 
@@ -229,7 +287,7 @@ describe "TrickSerial::Serializer::Simple" do
     e.instance_variable_get("@x").class.should == TrickSerial::Serializer::ActiveRecordProxy
     e.instance_variable_get("@y").class.should == TrickSerial::Serializer::ActiveRecordProxy
 
-    @s.verbose = @s.debug = true
+    @s.verbose = true; @s.debug = 0
     obj = @s.decode!(e)
     # $stderr.puts "marshal = #{str.inspect}"
 
@@ -241,7 +299,7 @@ describe "TrickSerial::Serializer::Simple" do
     obj = t::B.new
     obj.x = @m # should be encoded
     obj.y = @m # should not be encoded
-    @s.verbose = @s.debug = false
+    @s.verbose = false; @s.debug = 0
     obj = @s.encode!(obj)
     e = Marshal.load(str = Marshal.dump(obj))
 
@@ -249,7 +307,7 @@ describe "TrickSerial::Serializer::Simple" do
     e.instance_variable_get("@x").class.should == TrickSerial::Serializer::ActiveRecordProxy
     e.instance_variable_get("@y").class.should == TrickSerial::Serializer::Test::Model
 
-    @s.verbose = @s.debug = true
+    @s.verbose = true; @s.debug = 0
     obj = @s.decode!(e)
     # $stderr.puts "marshal = #{str.inspect}"
 

@@ -101,8 +101,16 @@ describe "TrickSerial::Serializer" do
 
     result.object_id.should == @h.object_id
     result[:os].class.should == @h[:os].class
+
+    # Validate OpenStruct @table encoding.
+    osh = result[:os].instance_variable_get("@table")
+    osh._get_without_trick_serial(:osm).class.should == TrickSerial::Serializer::ActiveRecordProxy
+    # Force OpenStruct @table Hash Swizzling.
     result[:os].osm.id.should == @m.id
-    result[:os].osm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:os].osm.class.should == TrickSerial::Serializer::Test::Model
+    # Validate OpenStruct @table HashHash Swizzling.
+    osh._get_without_trick_serial(:osm).class.should == TrickSerial::Serializer::Test::Model
+
     result[:os].osa.object_id.should == @h.object_id
     result[:os].osb.object_id.should == @h[:os].osb.object_id
     result[:os].osos.object_id.should == result[:os].object_id
@@ -129,7 +137,7 @@ describe "TrickSerial::Serializer" do
     result[:os].class.should == @h[:os].class
     result[:os].object_id.should_not == @h[:os].object_id
     result[:os].osm.id.should == @m.id
-    result[:os].osm.class.should == TrickSerial::Serializer::ActiveRecordProxy
+    result[:os].osm.class.should == TrickSerial::Serializer::Test::Model
     result[:os].osa.object_id.should_not == @h.object_id
     result[:os].osb.object_id.should == @h[:os].osb.object_id
     # result[:os].osos.object_id.should == result[:os].object_id
@@ -220,6 +228,26 @@ describe "TrickSerial::Serializer" do
     p = @h[:m]
     a = @h[:a].find { | e | @m.class == e.class }
     a.should == p
+  end
+
+  it "should handle proxy swizzling through OpenStruct" do
+    m = @h[:m]
+    os = OpenStruct.new
+    os.m = m
+    # pp os
+
+    @s.encode!(os)
+    osd = Marshal.dump(os) # save state
+
+    os.m.class.should == m.class
+    os.m.object_id.should_not == m.object_id
+
+    os = Marshal.load(osd)
+    # pp os
+
+    osh = os.instance_variable_get('@table')
+    os.m.class.should == m.class
+    os.m.object_id.should_not == m.object_id
   end
 
   it "should lazily traverse proxies" do

@@ -1,5 +1,7 @@
 require 'trick_serial'
 
+require 'ostruct' # OpenStruct
+
 module TrickSerial
   # Serializes objects using proxies for classes defined in #proxy_class_map.
   # Instances of the keys in #proxy_class_map are replaced by proxies if
@@ -110,7 +112,7 @@ module TrickSerial
     def proxyable
       unless @proxyable
         @proxyable = @class_option_map.keys.select{|cls| ! @class_option_map[cls][:do_not_traverse]}
-        @do_not_traverse ||= @class_option_map.keys.select{|cls| @class_option_map[cls][:do_not_traverse]} << ObjectProxy
+        @do_not_traverse ||= @class_option_map.keys.select{|cls| @class_option_map[cls][:do_not_traverse]}
         @class_option_cache ||= { }
         @proxyable.freeze
       end
@@ -151,11 +153,16 @@ module TrickSerial
         o = x
         x = _copy_with_extensions(x)
         @visited[o.object_id] = [ x, o ]
+        extended = false
         t = x.instance_variable_get("@table")
         t.keys.to_a.each do | k |
           v = t._get_without_trick_serial(k)
-          # t[k] = _encode! v
-          x.send(:"#{k}=", _encode!(v))
+          v = _encode! v
+          if ! extended && ObjectProxy === v
+            t.extend ProxySwizzlingHash
+            extended = true
+          end
+          x.send(:"#{k}=", v)
         end
 
       when Array
