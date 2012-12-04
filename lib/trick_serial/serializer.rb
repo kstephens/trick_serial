@@ -305,7 +305,7 @@ module TrickSerial
 
       def resolve_class
         @resolve_class ||=
-          eval("::#{@cls.to_s}")
+          @cls.to_s.split('::').inject(Object){|m, n| m.const_get(n)}
       end
 
       def object= x
@@ -343,13 +343,15 @@ module TrickSerial
       def class
         method_missing :class
       end
-      
+
       alias :_proxy_object_id :object_id
       def object_id
         method_missing :object_id
       end
 
-      alias :_proxy_id :id
+      if respond_to?(:id)
+        alias :_proxy_id :id
+      end
       def id
         method_missing :id
       end

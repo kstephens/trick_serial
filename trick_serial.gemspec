@@ -10,7 +10,7 @@ require 'trick_serial/version'
 Gem::Specification.new do |s|
   gem = s
   s.name = %q{trick_serial}
-  s.version = trick_serial::VERSION
+  s.version = TrickSerial::VERSION
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kurt Stephens"]
   s.description = %q{Trick Serializers using Proxies.}

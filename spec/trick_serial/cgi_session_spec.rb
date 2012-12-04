@@ -15,8 +15,8 @@ begin
   require 'action_controller/session/mem_cache_store'
   require 'trick_serial/serializer/cgi_session'
   $have_mem_cache_store = true
-rescue Exception => err
-  $stderr.puts "#{__FILE__}: #{err.inspect}\n  #{err.backtrace * "\n  "}"
+rescue LoadError => err
+  # NOTHING
 end
 
 
